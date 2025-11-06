@@ -16,7 +16,7 @@
     <a href="{{ url_for('members.members') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Members</a>
     <a href="{{ url_for('members.edit_member', member_id=member.id) }}" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit Member</a>
     <form id="del-member-{{ member.id }}" class="d-inline" method="post" action="{{ url_for('members.delete_member', member_id=member.id) }}">
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="button" class="btn btn-outline-danger" onclick="confirmDelete('member', '{{ member.name|e }}', 'del-member-{{ member.id }}')"><i class="bi bi-trash"></i> Delete</button>
     </form>
   </div>
@@ -70,19 +70,19 @@
         <div class="d-grid gap-2">
           {% if not member.is_active %}
           <form method="post" action="{{ url_for('members.change_status', member_id=member.id, new_status='active') }}">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn btn-success status-action-btn" onclick="return confirmStatusChange('{{ member.member_id }}', '{{ member.status.value }}', 'active');"><i class="bi bi-check2-circle"></i> Activate</button>
           </form>
           {% endif %}
           {% if not member.is_suspended %}
           <form method="post" action="{{ url_for('members.change_status', member_id=member.id, new_status='suspended') }}">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn btn-warning status-action-btn" onclick="return confirmStatusChange('{{ member.member_id }}', '{{ member.status.value }}', 'suspended');"><i class="bi bi-pause-circle"></i> Suspend</button>
           </form>
           {% endif %}
           {% if not member.is_expired %}
           <form method="post" action="{{ url_for('members.change_status', member_id=member.id, new_status='expired') }}">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn btn-secondary status-action-btn" onclick="return confirmStatusChange('{{ member.member_id }}', '{{ member.status.value }}', 'expired');"><i class="bi bi-calendar-x"></i> Mark as Expired</button>
           </form>
           {% endif %}

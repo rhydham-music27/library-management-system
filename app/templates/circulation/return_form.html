@@ -38,16 +38,16 @@
               <td>{% if loan.is_overdue %}<span class="badge bg-danger">Overdue ({{ loan.days_overdue }}d)</span>{% else %}<span class="badge bg-info">Active</span>{% endif %}</td>
               <td>
                 {% if loan.is_overdue %}
-                  {% set calculated_fine = loan.days_overdue * config.FINE_RATE_PER_DAY %}
-                  <span class="text-danger fw-semibold">${{ calculated_fine:.2f }}</span>
-                  <br><small class="text-muted">({{ loan.days_overdue }}d × ${{ config.FINE_RATE_PER_DAY:.2f }})</small>
+                  {% set calculated_fine = loan.days_overdue * fine_rate %}
+                  <span class="text-danger fw-semibold">${{ '%.2f' % calculated_fine }}</span>
+                  <br><small class="text-muted">({{ loan.days_overdue }}d × ${{ '%.2f' % fine_rate }})</small>
                 {% else %}
                   <span class="text-muted">—</span>
                 {% endif %}
               </td>
               <td class="text-end">
                 <form method="post" action="{{ url_for('circulation.return_book') }}">
-                  {{ csrf_token() }}
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="loan_id" value="{{ loan.id }}" />
                   <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-journal-arrow-up"></i> Return This Book</button>
                 </form>
@@ -89,10 +89,10 @@
               {{ form.notes(class_='form-control', rows='2') }}
             </div>
             {% if loan and loan.is_overdue %}
-            {% set calculated_fine = loan.days_overdue * config.FINE_RATE_PER_DAY %}
+            {% set calculated_fine = loan.days_overdue * fine_rate %}
             <div class="alert alert-warning mt-3">
               <i class="bi bi-exclamation-triangle me-2"></i>
-              <strong>Fine Assessment:</strong> A fine of ${{ calculated_fine:.2f }} will be assessed for this overdue return.
+              <strong>Fine Assessment:</strong> A fine of ${{ '%.2f' % calculated_fine }} will be assessed for this overdue return.
             </div>
             {% endif %}
             <div class="d-flex gap-2">

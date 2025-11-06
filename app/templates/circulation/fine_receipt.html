@@ -34,9 +34,9 @@
       <dt class="col-sm-3">Days Overdue</dt>
       <dd class="col-sm-9">{{ loan.days_overdue }}</dd>
       <dt class="col-sm-3">Fine Rate</dt>
-      <dd class="col-sm-9">${{ config.FINE_RATE_PER_DAY:.2f }} per day</dd>
+      <dd class="col-sm-9">${{ '%.2f' % fine_rate }} per day</dd>
       <dt class="col-sm-3">Total Fine Assessed</dt>
-      <dd class="col-sm-9">${{ loan.fine_amount:.2f }}</dd>
+      <dd class="col-sm-9">${{ '%.2f' % loan.fine_amount }}</dd>
     </dl>
   </div>
 
@@ -44,15 +44,15 @@
     <div class="fw-semibold mb-1">Payment Information</div>
     <dl class="row mb-0">
       <dt class="col-sm-3">Payment Amount</dt>
-      <dd class="col-sm-9"><span class="fs-4 fw-bold">${{ amount:.2f }}</span></dd>
+      <dd class="col-sm-9"><span class="fs-4 fw-bold">${{ '%.2f' % amount }}</span></dd>
       <dt class="col-sm-3">Payment Date</dt>
       <dd class="col-sm-9">{{ payment_date.strftime('%B %d, %Y') }}</dd>
       <dt class="col-sm-3">Payment Method</dt>
       <dd class="col-sm-9">{{ (payment_method or 'Cash')|title }}</dd>
       <dt class="col-sm-3">Previous Payments</dt>
-      <dd class="col-sm-9">${{ (loan.fine_paid - amount):.2f }}</dd>
+      <dd class="col-sm-9">${{ '%.2f' % prev_paid }}</dd>
       <dt class="col-sm-3">Remaining Balance</dt>
-      <dd class="col-sm-9">${{ loan.fine_balance:.2f }}</dd>
+      <dd class="col-sm-9">${{ '%.2f' % fine_balance }}</dd>
     </dl>
   </div>
 

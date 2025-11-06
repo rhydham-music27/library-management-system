@@ -37,7 +37,7 @@
               <label class="form-label">Due Date</label>
               {{ form.due_date(class_='form-control', placeholder='YYYY-MM-DD') }}
               {% if form.due_date.errors %}<div class="invalid-feedback d-block">{{ form.due_date.errors[0] }}</div>{% endif %}
-              <div class="form-text">Leave blank for default {{ current_app.config.get('LOAN_PERIOD_DAYS', 14) }}-day period.</div>
+              <div class="form-text">Leave blank for default {{ loan_period_days }}-day period.</div>
             </div>
             <div class="col-md-6"></div>
           </div>

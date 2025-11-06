@@ -56,7 +56,7 @@ def loans():
 def loan_detail(loan_id: int):
     loan = Loan.query.get_or_404(loan_id)
     days_borrowed = ((loan.return_date or date.today()) - loan.borrow_date).days
-    return render_template('circulation/loan_detail.html', loan=loan, days_borrowed=days_borrowed)
+    return render_template('circulation/loan_detail.html', loan=loan, days_borrowed=days_borrowed, fine_rate=current_app.config.get('FINE_RATE_PER_DAY', 1.0))
 
 
 @bp.route('/borrow', methods=['GET', 'POST'])
@@ -99,7 +99,7 @@ def borrow():
         except Exception:
             pass
 
-    return render_template('circulation/borrow_form.html', form=form)
+    return render_template('circulation/borrow_form.html', form=form, loan_period_days=current_app.config.get('LOAN_PERIOD_DAYS', 14))
 
 
 @bp.route('/return', methods=['GET', 'POST'])
@@ -108,7 +108,7 @@ def borrow():
 def return_book():
     if request.method == 'GET':
         active_loans = Loan.query.filter_by(status=LoanStatus.BORROWED).order_by(Loan.due_date.asc()).all()
-        return render_template('circulation/return_form.html', active_loans=active_loans, form=None)
+        return render_template('circulation/return_form.html', active_loans=active_loans, form=None, fine_rate=current_app.config.get('FINE_RATE_PER_DAY', 1.0))
 
     # POST: confirm and process
     loan_id = request.form.get('loan_id', type=int) or request.form.get('loan_id')
@@ -138,7 +138,7 @@ def return_book():
 
     # If form didn't validate, render confirmation step with loan displayed
     loan = Loan.query.get(form.loan_id.data) if form.loan_id.data else None
-    return render_template('circulation/return_form.html', form=form, loan=loan, active_loans=None)
+    return render_template('circulation/return_form.html', form=form, loan=loan, active_loans=None, fine_rate=current_app.config.get('FINE_RATE_PER_DAY', 1.0))
 
 
 @bp.route('/overdue')
@@ -183,7 +183,7 @@ def pay_fine(loan_id: int):
             return redirect(url_for('circulation.fine_receipt', loan_id=loan.id, amount=str(amount), method=form.payment_method.data))
         else:
             flash(message, 'danger')
-    return render_template('circulation/fine_payment.html', form=form, loan=loan)
+    return render_template('circulation/fine_payment.html', form=form, loan=loan, fine_rate=current_app.config.get('FINE_RATE_PER_DAY', 1.0))
 
 
 @bp.route('/loans/<int:loan_id>/receipt')
@@ -192,10 +192,28 @@ def pay_fine(loan_id: int):
 def fine_receipt(loan_id: int):
     from datetime import date as _date
     loan = Loan.query.get_or_404(loan_id)
-    amount = request.args.get('amount', type=float) or 0.0
+    # Parse amount as Decimal for safe arithmetic with DB Numeric fields
+    from decimal import Decimal as _Dec
+    _amt_str = request.args.get('amount')
+    try:
+        amount_dec = _Dec(str(_amt_str)) if _amt_str is not None else _Dec('0.00')
+    except Exception:
+        amount_dec = _Dec('0.00')
     payment_method = request.args.get('method')
     payment_date = _date.today()
-    return render_template('circulation/fine_receipt.html', loan=loan, amount=amount, payment_method=payment_method, payment_date=payment_date)
+    # Precompute numeric values for display to avoid Decimal/float ops in templates
+    prev_paid_dec = _Dec(str(loan.fine_paid or 0)) - amount_dec
+    fine_balance_dec = _Dec(str(loan.fine_balance or 0))
+    return render_template(
+        'circulation/fine_receipt.html',
+        loan=loan,
+        amount=float(amount_dec),
+        prev_paid=float(prev_paid_dec),
+        fine_balance=float(fine_balance_dec),
+        payment_method=payment_method,
+        payment_date=payment_date,
+        fine_rate=current_app.config.get('FINE_RATE_PER_DAY', 1.0),
+    )
 
 
 @bp.route('/member/<int:member_id>/fines')

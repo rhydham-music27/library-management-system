@@ -1,7 +1,8 @@
 import os
 import click
 from flask import Flask, render_template
-from .extensions import db, migrate, login_manager
+from flask_wtf.csrf import generate_csrf
+from .extensions import db, migrate, login_manager, csrf
 from .main import bp as main_bp
 from .auth import bp as auth_bp
 from .catalog import bp as catalog_bp
@@ -51,6 +52,9 @@ def create_app(config_name: str = "development") -> Flask:
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
 
+    # Enable CSRF protection
+    csrf.init_app(app)
+
     # Flask-Login user loader
     @login_manager.user_loader
     def load_user(user_id):
@@ -79,6 +83,7 @@ def create_app(config_name: str = "development") -> Flask:
     def inject_globals():
         return {
             "app_name": "Library Management System",
+            "csrf_token": generate_csrf,
         }
 
     # CLI commands

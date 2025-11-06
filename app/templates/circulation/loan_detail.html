@@ -49,18 +49,18 @@
           <dt class="col-sm-3">Fine Amount</dt>
           <dd class="col-sm-9">
             {% if loan.fine_amount and loan.fine_amount|float > 0 %}
-              ${{ loan.fine_amount:.2f }}
-              <small class="text-muted">({{ loan.days_overdue }} days × ${{ config.FINE_RATE_PER_DAY:.2f }}/day)</small>
+              ${{ '%.2f' % loan.fine_amount }}
+              <small class="text-muted">({{ loan.days_overdue }} days × ${{ '%.2f' % fine_rate }}/day)</small>
             {% else %}
               <span class="text-muted">No fine</span>
             {% endif %}
           </dd>
           <dt class="col-sm-3">Fine Paid</dt>
-          <dd class="col-sm-9">${{ (loan.fine_paid or 0):.2f }}</dd>
+          <dd class="col-sm-9">${{ '%.2f' % (loan.fine_paid or 0) }}</dd>
           <dt class="col-sm-3">Fine Balance</dt>
           <dd class="col-sm-9">
             {% if loan.has_unpaid_fines %}
-              <span class="text-danger fw-bold">${{ loan.fine_balance:.2f }}</span>
+              <span class="text-danger fw-bold">${{ '%.2f' % loan.fine_balance }}</span>
             {% else %}
               <span class="text-success">Paid in full</span>
             {% endif %}
@@ -86,7 +86,7 @@
           <div class="text-danger">This loan is overdue by {{ loan.days_overdue }} day(s).</div>
         {% endif %}
         {% if loan.has_unpaid_fines %}
-          <div class="text-warning mt-2">Outstanding fine: ${{ loan.fine_balance:.2f }}</div>
+          <div class="text-warning mt-2">Outstanding fine: ${{ '%.2f' % loan.fine_balance }}</div>
           <a href="{{ url_for('circulation.pay_fine', loan_id=loan.id) }}" class="btn btn-warning w-100 mt-2"><i class="bi bi-currency-dollar"></i> Pay Fine</a>
         {% endif %}
         {% if loan.is_active %}

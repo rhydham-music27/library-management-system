@@ -14,7 +14,6 @@
 <div class="card mb-3">
   <div class="card-body">
     <form method="get" class="row g-3 search-form">
-      {{ form.hidden_tag() }}
       <div class="col-md-4">
         <label class="form-label">Search</label>
         <input type="text" name="query" value="{{ query or '' }}" class="form-control" placeholder="Search by member or book" />
@@ -68,8 +67,8 @@
           </td>
           <td>
             {% if loan.fine_amount and loan.fine_amount|float > 0 %}
-              <span class="text-danger fw-semibold">${{ (loan.fine_amount - (loan.fine_paid or 0))|float('%.2f') }}</span>
-              {% if loan.fine_paid and loan.fine_paid|float > 0 %}<br><small class="text-muted">(Paid: ${{ loan.fine_paid:.2f }})</small>{% endif %}
+              <span class="text-danger fw-semibold">${{ '%.2f' % ((loan.fine_amount or 0) - (loan.fine_paid or 0)) }}</span>
+              {% if loan.fine_paid and loan.fine_paid|float > 0 %}<br><small class="text-muted">(Paid: ${{ '%.2f' % (loan.fine_paid or 0) }})</small>{% endif %}
             {% else %}
               <span class="text-muted">—</span>
             {% endif %}
@@ -78,7 +77,7 @@
             <a href="{{ url_for('circulation.loan_detail', loan_id=loan.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> View</a>
             {% if loan.is_active %}
             <form class="d-inline" method="post" action="{{ url_for('circulation.quick_return', loan_id=loan.id) }}">
-              {{ csrf_token() }}
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Return &quot;{{ loan.book.title|e }}&quot; borrowed by {{ loan.member.name|e }}{% if loan.is_overdue %} (Overdue {{ loan.days_overdue }} days){% endif %}?')"><i class="bi bi-journal-arrow-up"></i> Return</button>
             </form>
             {% endif %}

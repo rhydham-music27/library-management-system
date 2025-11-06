@@ -37,10 +37,10 @@
     <div class="card">
       <div class="card-header bg-white fw-semibold">Fine Details</div>
       <div class="card-body">
-        <div class="mb-2">Total Fine: <span class="fine-amount">${{ loan.fine_amount:.2f }}</span></div>
-        <div class="mb-2">Amount Paid: <span class="fine-paid">${{ loan.fine_paid:.2f }}</span></div>
-        <div class="mb-2">Outstanding Balance: <span class="fine-balance">${{ loan.fine_balance:.2f }}</span></div>
-        <div class="text-muted">Fine Rate: ${{ config.FINE_RATE_PER_DAY:.2f }} per day</div>
+        <div class="mb-2">Total Fine: <span class="fine-amount">${{ '%.2f' % loan.fine_amount }}</span></div>
+        <div class="mb-2">Amount Paid: <span class="fine-paid">${{ '%.2f' % loan.fine_paid }}</span></div>
+        <div class="mb-2">Outstanding Balance: <span class="fine-balance">${{ '%.2f' % loan.fine_balance }}</span></div>
+        <div class="text-muted">Fine Rate: ${{ '%.2f' % fine_rate }} per day</div>
       </div>
     </div>
   </div>
@@ -56,7 +56,7 @@
         <div class="col-md-6">
           <label class="form-label">{{ form.amount.label.text }} <span class="text-danger">*</span></label>
           {{ form.amount(class_='form-control amount-input', id='payment_amount', step='0.01', min='0.01', required=True) }}
-          <div class="form-text">Maximum: ${{ loan.fine_balance:.2f }}</div>
+          <div class="form-text">Maximum: ${{ '%.2f' % loan.fine_balance }}</div>
           {% if form.amount.errors %}<div class="invalid-feedback d-block">{{ form.amount.errors[0] }}</div>{% endif %}
         </div>
         <div class="col-md-6">
