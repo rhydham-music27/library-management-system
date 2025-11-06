@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Access Denied{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 50vh;" role="alert" aria-live="assertive">
+  <div class="text-center">
+    <i class="bi bi-shield-fill-exclamation text-danger display-1 mb-3" aria-hidden="true"></i>
+    <h1 class="mb-2">403 - Access Denied</h1>
+    <p class="text-muted">You do not have permission to access this resource. This page requires specific privileges that your account does not have.</p>
+
+    {% if current_user.is_authenticated %}
+      <div class="mb-2">
+        <span class="badge role-badge role-{{ current_user.role.value }} text-uppercase">{{ current_user.role.value }}</span>
+      </div>
+      <p class="text-muted small">If you believe this is an error, please contact an administrator.</p>
+      <div class="mt-3">
+        <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-person"></i> My Profile</a>
+        <a href="{{ url_for('main.about') }}" class="btn btn-outline-primary me-2"><i class="bi bi-info-circle"></i> Contact Administrator</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary"><i class="bi bi-house me-1"></i> Return to Home</a>
+      </div>
+    {% else %}
+      <p class="text-muted">You may need to sign in with an account that has the required permissions.</p>
+      <div class="mt-3">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary me-2">Sign In</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">Return to Home</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }} - Library Management System{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('catalog.books') }}">Books</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ book.title }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">{{ book.title }}</h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('catalog.books') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Books</a>
+    {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+      <a href="{{ url_for('catalog.edit_book', book_id=book.id) }}" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit Book</a>
+      <form method="post" action="{{ url_for('catalog.delete_book', book_id=book.id) }}" class="d-inline" id="del-book-{{ book.id }}">
+        <button type="submit" class="btn btn-danger" onclick="confirmDelete('book', '{{ book.title|e }}', 'del-book-{{ book.id }}'); return false;"><i class="bi bi-trash"></i> Delete</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="card book-detail-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">{{ book.title }}</span>
+        {% if book.is_available %}
+          <span class="badge bg-success">Available</span>
+        {% else %}
+          <span class="badge bg-danger">Unavailable</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3">ISBN</dt><dd class="col-sm-9">{{ book.isbn or 'N/A' }}</dd>
+          <dt class="col-sm-3">Author</dt><dd class="col-sm-9">{{ book.author }}</dd>
+          <dt class="col-sm-3">Publisher</dt><dd class="col-sm-9">{{ book.publisher or 'N/A' }}</dd>
+          <dt class="col-sm-3">Publication Year</dt><dd class="col-sm-9">{{ book.publication_year or 'N/A' }}</dd>
+          <dt class="col-sm-3">Edition</dt><dd class="col-sm-9">{{ book.edition or 'N/A' }}</dd>
+          <dt class="col-sm-3">Language</dt><dd class="col-sm-9">{{ book.language }}</dd>
+          <dt class="col-sm-3">Pages</dt><dd class="col-sm-9">{{ book.pages or 'N/A' }}</dd>
+          <dt class="col-sm-3">Category</dt><dd class="col-sm-9">{% if book.category %}<a href="{{ url_for('catalog.books', category_id=book.category.id) }}">{{ book.category.name }}</a>{% else %}Uncategorized{% endif %}</dd>
+          <dt class="col-sm-3">Shelf Location</dt><dd class="col-sm-9">{{ book.shelf_location or 'N/A' }}</dd>
+        </dl>
+        <hr />
+        <h6>Description</h6>
+        <p class="mb-0">{{ book.description or 'No description available.' }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Availability</div>
+      <div class="card-body">
+        <div class="mb-2">Total Copies: <strong>{{ book.quantity }}</strong></div>
+        <div class="mb-2">Available: <strong>{{ book.available_quantity }}</strong></div>
+        {% if book.is_available %}
+          <span class="badge bg-success">Available for Borrowing</span>
+        {% else %}
+          <span class="badge bg-danger">Currently Unavailable</span>
+        {% endif %}
+        {% if current_user.is_authenticated and current_user.is_member() and book.is_available %}
+          <hr />
+          <a href="{{ url_for('circulation.borrow', book_id=book.id) }}" class="btn btn-primary w-100">Borrow This Book</a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Metadata</div>
+      <div class="card-body">
+        <div class="text-muted small">
+          <div><i class="bi bi-calendar-plus me-2"></i>Added on {{ book.created_at.strftime('%b %d, %Y %I:%M %p') if book.created_at else 'N/A' }}</div>
+          <div><i class="bi bi-arrow-repeat me-2"></i>Last updated {{ book.updated_at.strftime('%b %d, %Y %I:%M %p') if book.updated_at else 'N/A' }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header fw-semibold">Loan Information</div>
+      <div class="card-body">
+        <div class="mb-2">Available Copies: <strong>{{ book.available_quantity }}</strong> of <strong>{{ book.quantity }}</strong></div>
+        {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+          <a href="{{ url_for('circulation.book_history', book_id=book.id) }}" class="btn btn-outline-primary btn-sm w-100 mt-2">View Loan History</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

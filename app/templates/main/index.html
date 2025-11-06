@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Home - Library Management System{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="p-5 mb-4 bg-body-tertiary rounded-3">
+    <div class="container-fluid py-5">
+      <h1 class="display-6 fw-bold">{{ message }}</h1>
+      <p class="col-md-10 fs-5">Manage books, members, and circulation with ease. This dashboard will show key statistics and recent activity.</p>
+      {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+        <a class="btn btn-primary btn-lg" role="button" href="{{ url_for('catalog.add_book') }}"><i class="bi bi-plus-circle"></i> Add New Book</a>
+        <a class="btn btn-outline-primary btn-lg ms-2" role="button" href="{{ url_for('members.register') }}"><i class="bi bi-person-plus"></i> Register Member</a>
+        <a class="btn btn-success btn-lg ms-2" role="button" href="{{ url_for('circulation.borrow') }}"><i class="bi bi-box-arrow-in-right"></i> Issue Book</a>
+      {% else %}
+        <a class="btn btn-primary btn-lg disabled" role="button" aria-disabled="true"><i class="bi bi-plus-circle"></i> Add New Book</a>
+        <a class="btn btn-outline-primary btn-lg ms-2 disabled" role="button" aria-disabled="true"><i class="bi bi-person-plus"></i> Register Member</a>
+        <a class="btn btn-success btn-lg ms-2 disabled" role="button" aria-disabled="true"><i class="bi bi-box-arrow-in-right"></i> Issue Book</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-book-half text-primary fs-2 me-3"></i>
+          <div>
+            <div class="fw-semibold">Total Books</div>
+            <div class="fs-4">{{ stats.total_books }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-people text-success fs-2 me-3"></i>
+          <div>
+            <div class="fw-semibold">Active Members</div>
+            <div class="fs-4">{{ stats.active_members }}</div>
+          </div>
+        </div>
+        {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+        <div class="card-footer bg-white text-end py-2">
+          <a href="{{ url_for('members.members') }}" class="small">View All Members</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-journal-arrow-down text-warning fs-2 me-3"></i>
+          <div>
+            <div class="fw-semibold">Books on Loan</div>
+            <div class="fs-4">{{ stats.books_on_loan }}</div>
+          </div>
+        </div>
+        {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+        <div class="card-footer bg-white text-end py-2">
+          <a href="{{ url_for('circulation.loans', status='borrowed') }}" class="small">View Active Loans</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-exclamation-octagon text-danger fs-2 me-3"></i>
+          <div>
+            <div class="fw-semibold">Overdue Books</div>
+            <div class="fs-4">{{ stats.overdue_books }}</div>
+            <div class="small text-muted mt-1">Unpaid Fines: ${{ '%.2f'|format(stats.total_unpaid_fines) }}</div>
+          </div>
+        </div>
+        {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+        <div class="card-footer bg-white text-end py-2">
+          <a href="{{ url_for('circulation.overdue') }}" class="small">View Overdue Books</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <a href="{{ url_for('catalog.books') }}" class="btn btn-outline-primary"><i class="bi bi-journals"></i> Browse All Books</a>
+    {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+    <a href="{{ url_for('reports.dashboard') }}" class="btn btn-outline-info ms-2"><i class="bi bi-graph-up"></i> View Reports &amp; Analytics</a>
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Recent Books</div>
+        <div class="card-body">
+          {% if recent_books %}
+            <div class="list-group list-group-flush">
+              {% for book in recent_books %}
+                <a href="{{ url_for('catalog.book_detail', book_id=book.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="bi bi-journal-text me-2 text-primary"></i>
+                    <span class="fw-semibold">{{ book.title }}</span>
+                    <span class="text-muted">by {{ book.author }}</span>
+                  </div>
+                  <small class="text-muted">Added {{ (book.created_at.strftime('%b %d, %Y')) if book.created_at else '' }}</small>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No books in catalog yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Recent Members</div>
+        <div class="card-body">
+          {% if recent_members and current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) %}
+            <div class="list-group list-group-flush">
+              {% for m in recent_members %}
+                <a href="{{ url_for('members.member_detail', member_id=m.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="bi bi-person me-2 text-success"></i>
+                    <span class="fw-semibold">{{ m.name }}</span>
+                    <span class="text-muted">({{ m.member_id }})</span>
+                  </div>
+                  <small class="text-muted">Registered {{ (m.registration_date.strftime('%b %d, %Y')) if m.registration_date else '' }}</small>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No recent members to show.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% if current_user.is_authenticated and (current_user.is_librarian() or current_user.is_admin()) and overdue_with_fines %}
+  <div class="row g-3 mt-3">
+    <div class="col-12">
+      <div class="card shadow-sm overdue-widget">
+        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+          <span>Overdue Books with Unpaid Fines</span>
+          <a href="{{ url_for('circulation.overdue') }}" class="btn btn-sm btn-outline-danger">View All</a>
+        </div>
+        <div class="card-body">
+          <div class="list-group list-group-flush">
+            {% for loan in overdue_with_fines %}
+            <div class="list-group-item d-flex justify-content-between align-items-center overdue-item">
+              <div>
+                <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                <span class="fw-semibold">{{ loan.book.title }}</span>
+                <span class="text-muted">borrowed by {{ loan.member.name }}</span>
+                <br><small class="text-muted">Due: {{ loan.due_date.strftime('%b %d, %Y') }} ({{ loan.days_overdue }} days overdue)</small>
+              </div>
+              <div class="text-end">
+                <span class="badge bg-danger">Fine: ${{ '%.2f'|format(loan.fine_balance) }}</span>
+                <br><a href="{{ url_for('circulation.pay_fine', loan_id=loan.id) }}" class="btn btn-sm btn-warning mt-1">Pay Fine</a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

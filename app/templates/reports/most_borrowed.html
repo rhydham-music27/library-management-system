@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Most Borrowed Books - Library Management System{% endblock %}
+
+{% block content %}
+<div class="py-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.dashboard') }}">Reports</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Most Borrowed Books</li>
+    </ol>
+  </nav>
+
+  <h2 class="mb-3">Most Borrowed Books</h2>
+
+  <form method="get" class="date-range-form mb-3">
+    {{ form.hidden_tag() }}
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label" for="start_date">Start Date</label>
+        {{ form.start_date(class='form-control', id='start_date') }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="end_date">End Date</label>
+        {{ form.end_date(class='form-control', id='end_date') }}
+      </div>
+      <div class="col-md-4">
+        {{ form.submit(class='btn btn-primary me-2') }}
+        <button type="button" class="btn btn-outline-secondary" onclick="window.clearDateRange()"><i class="bi bi-x-circle"></i> Clear</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="export-buttons">
+    <a class="btn btn-outline-success" href="{{ url_for('reports.export_most_borrowed_csv', start_date=form.start_date.data, end_date=form.end_date.data) }}" onclick="return window.confirmExport('CSV','Most Borrowed Books')"><i class="bi bi-file-earmark-spreadsheet"></i> Export CSV</a>
+    <a class="btn btn-outline-danger" href="{{ url_for('reports.export_most_borrowed_pdf', start_date=form.start_date.data, end_date=form.end_date.data) }}" onclick="return window.confirmExport('PDF','Most Borrowed Books')"><i class="bi bi-file-earmark-pdf"></i> Export PDF</a>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold">Most Borrowed Books</div>
+    <div class="card-body">
+      <div class="chart-container" style="height: 420px"><canvas id="mostBorrowedChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Details</div>
+    <div class="card-body p-0">
+      {% if data %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 report-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Book Title</th>
+              <th>Author</th>
+              <th>Category</th>
+              <th class="text-end">Times Borrowed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b, c in data %}
+            <tr>
+              <td class="rank-cell">{{ loop.index }}</td>
+              <td><a href="{{ url_for('catalog.book_detail', book_id=b.id) }}">{{ b.title }}</a></td>
+              <td>{{ b.author }}</td>
+              <td>{{ b.category.name if b.category else 'Uncategorized' }}</td>
+              <td class="text-end"><span class="badge bg-primary">{{ c }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-muted">No borrowing activity in the selected date range.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (function(){
+    const el = document.getElementById('mostBorrowedChart');
+    if (!el) return;
+    const data = {{ chart_data|tojson }};
+    new Chart(el.getContext('2d'), {
+      type: 'bar',
+      data: { labels: data.labels, datasets: [{ label: 'Times Borrowed', data: data.values, backgroundColor: '#0d6efd' }] },
+      options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }
+    });
+  })();
+</script>
+{% endblock %}

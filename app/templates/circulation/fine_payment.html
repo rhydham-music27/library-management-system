@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Pay Fine - Library Management System{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('circulation.loans') }}">Circulation</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('circulation.loan_detail', loan_id=loan.id) }}">Loan #{{ loan.id }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Pay Fine</li>
+  </ol>
+</nav>
+
+<h2 class="mb-3">Pay Fine</h2>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-white fw-semibold">Loan Details</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Book</dt>
+          <dd class="col-sm-8">{{ loan.book.title }}</dd>
+          <dt class="col-sm-4">Member</dt>
+          <dd class="col-sm-8">{{ loan.member.name }} <span class="text-muted">({{ loan.member.member_id }})</span></dd>
+          <dt class="col-sm-4">Due Date</dt>
+          <dd class="col-sm-8">{{ loan.due_date.strftime('%b %d, %Y') }}</dd>
+          <dt class="col-sm-4">Days Overdue</dt>
+          <dd class="col-sm-8"><span class="badge bg-danger">{{ loan.days_overdue }}</span></dd>
+          <dt class="col-sm-4">Return Date</dt>
+          <dd class="col-sm-8">{{ loan.return_date.strftime('%b %d, %Y') if loan.return_date else 'Not yet returned' }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-white fw-semibold">Fine Details</div>
+      <div class="card-body">
+        <div class="mb-2">Total Fine: <span class="fine-amount">${{ loan.fine_amount:.2f }}</span></div>
+        <div class="mb-2">Amount Paid: <span class="fine-paid">${{ loan.fine_paid:.2f }}</span></div>
+        <div class="mb-2">Outstanding Balance: <span class="fine-balance">${{ loan.fine_balance:.2f }}</span></div>
+        <div class="text-muted">Fine Rate: ${{ config.FINE_RATE_PER_DAY:.2f }} per day</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header bg-white fw-semibold">Record Payment</div>
+  <div class="card-body">
+    <form method="post" class="fine-payment-form" novalidate data-loan-id="{{ loan.id }}" data-balance="{{ loan.fine_balance }}">
+      {{ form.hidden_tag() }}
+      {{ form.loan_id }}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">{{ form.amount.label.text }} <span class="text-danger">*</span></label>
+          {{ form.amount(class_='form-control amount-input', id='payment_amount', step='0.01', min='0.01', required=True) }}
+          <div class="form-text">Maximum: ${{ loan.fine_balance:.2f }}</div>
+          {% if form.amount.errors %}<div class="invalid-feedback d-block">{{ form.amount.errors[0] }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">{{ form.payment_method.label.text }}</label>
+          {{ form.payment_method(class_='form-select') }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">{{ form.notes.label.text }}</label>
+          {{ form.notes(class_='form-control', rows='2', placeholder='Optional notes about this payment') }}
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-currency-dollar"></i> {{ form.submit.label.text }}</button>
+        <a href="{{ url_for('circulation.loan_detail', loan_id=loan.id) }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

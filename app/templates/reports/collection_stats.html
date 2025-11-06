@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Collection Statistics - Library Management System{% endblock %}
+
+{% block content %}
+<div class="py-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.dashboard') }}">Reports</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Collection Statistics</li>
+    </ol>
+  </nav>
+
+  <h2 class="mb-3">Collection Statistics</h2>
+  <div class="export-buttons mb-3">
+    <a class="btn btn-outline-danger" href="{{ url_for('reports.export_collection_stats_pdf') }}" onclick="return window.confirmExport('PDF','Collection Statistics')"><i class="bi bi-file-earmark-pdf"></i> Export PDF</a>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="stat-value">{{ stats.total_books }}</div><div class="stat-label">Total Books</div></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="stat-value">{{ stats.total_quantity }}</div><div class="stat-label">Total Copies</div></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="stat-value">{{ stats.total_categories }}</div><div class="stat-label">Categories</div></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="stat-value">{{ stats.avg_books_per_category }}</div><div class="stat-label">Avg per Category</div></div></div></div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Books by Category</div>
+        <div class="card-body"><div class="chart-container"><canvas id="booksByCategoryChart"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Availability Status</div>
+        <div class="card-body"><div class="chart-container"><canvas id="availabilityChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Books by Category</div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 report-table">
+          <thead><tr><th>Category</th><th class="text-end">Books</th></tr></thead>
+          <tbody>
+            {% for name, count in stats.by_category %}
+            <tr>
+              <td>{{ name }}</td>
+              <td class="text-end">{{ count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script type="application/json" id="booksByCategoryData">{{ books_by_category|tojson }}</script>
+<script type="application/json" id="availabilityData">{{ availability|tojson }}</script>
+<script>
+  (function(){
+    const bc = document.getElementById('booksByCategoryChart');
+    if (bc) {
+      const dataEl = document.getElementById('booksByCategoryData');
+      const data = dataEl ? JSON.parse(dataEl.textContent) : { labels: [], values: [] };
+      const colors = (window.getChartColors ? window.getChartColors(data.labels.length) : ['#0d6efd','#198754','#ffc107','#dc3545','#0dcaf0','#6c757d']);
+      new Chart(bc.getContext('2d'), { type: 'pie', data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: colors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+    }
+    const av = document.getElementById('availabilityChart');
+    if (av) {
+      const aEl = document.getElementById('availabilityData');
+      const data2 = aEl ? JSON.parse(aEl.textContent) : { labels: [], values: [] };
+      new Chart(av.getContext('2d'), { type: 'doughnut', data: { labels: data2.labels, datasets: [{ data: data2.values, backgroundColor: ['#198754','#0dcaf0'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+    }
+  })();
+</script>
+{% endblock %}

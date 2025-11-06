@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Reports Dashboard - Library Management System{% endblock %}
+
+{% block content %}
+<div class="py-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Reports Dashboard</li>
+    </ol>
+  </nav>
+
+  <h2 class="mb-3">Reports &amp; Analytics Dashboard</h2>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="card shadow-sm stat-card">
+        <div class="card-body">
+          <div class="stat-value">{{ stats.total_books }}</div>
+          <div class="stat-label">Total Books</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm stat-card">
+        <div class="card-body">
+          <div class="stat-value">{{ stats.active_members }}</div>
+          <div class="stat-label">Active Members</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm stat-card">
+        <div class="card-body">
+          <div class="stat-value">{{ stats.books_on_loan }}</div>
+          <div class="stat-label">Books on Loan</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm stat-card">
+        <div class="card-body">
+          <div class="stat-value">{{ stats.overdue_books }}</div>
+          <div class="stat-label">Overdue Books</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Circulation Trends (Last 30 Days)</div>
+        <div class="card-body">
+          <div class="chart-container"><canvas id="circulationTrendsChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Books by Category</div>
+        <div class="card-body">
+          <div class="chart-container"><canvas id="booksByCategoryChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <a class="card report-card text-decoration-none" href="{{ url_for('reports.most_borrowed') }}">
+        <div class="card-body">
+          <div class="fw-semibold mb-1">Most Borrowed Books</div>
+          <div class="text-muted small">Top titles by borrow count</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a class="card report-card text-decoration-none" href="{{ url_for('reports.active_members') }}">
+        <div class="card-body">
+          <div class="fw-semibold mb-1">Active Members</div>
+          <div class="text-muted small">Top borrowers and activity</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a class="card report-card text-decoration-none" href="{{ url_for('reports.overdue_summary') }}">
+        <div class="card-body">
+          <div class="fw-semibold mb-1">Overdue Summary</div>
+          <div class="text-muted small">Current overdue breakdown</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (function(){
+    const ct = document.getElementById('circulationTrendsChart');
+    if (ct) {
+      const data = {{ circulation_trend_data|tojson }};
+      new Chart(ct.getContext('2d'), {
+        type: 'line',
+        data: { labels: data.labels, datasets: [{ label: 'Loans', data: data.values, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', tension: 0.3, fill: true }] },
+        options: { responsive: true, plugins: { legend: { display: true } } }
+      });
+    }
+    const bc = document.getElementById('booksByCategoryChart');
+    if (bc) {
+      const data = {{ books_by_category_data|tojson }};
+      const colors = (window.getChartColors ? window.getChartColors(data.labels.length) : ['#0d6efd','#198754','#ffc107','#dc3545','#0dcaf0','#6c757d']);
+      new Chart(bc.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: colors }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+  })();
+</script>
+{% endblock %}

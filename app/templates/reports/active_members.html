@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}Active Members Report - Library Management System{% endblock %}
+
+{% block content %}
+<div class="py-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.dashboard') }}">Reports</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Active Members</li>
+    </ol>
+  </nav>
+
+  <h2 class="mb-3">Active Members Report</h2>
+
+  <form method="get" class="date-range-form mb-3">
+    {{ form.hidden_tag() }}
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label" for="start_date">Start Date</label>
+        {{ form.start_date(class='form-control', id='start_date') }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="end_date">End Date</label>
+        {{ form.end_date(class='form-control', id='end_date') }}
+      </div>
+      <div class="col-md-4">
+        {{ form.submit(class='btn btn-primary me-2') }}
+        <button type="button" class="btn btn-outline-secondary" onclick="window.clearDateRange()"><i class="bi bi-x-circle"></i> Clear</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="export-buttons">
+    <a class="btn btn-outline-success" href="{{ url_for('reports.export_active_members_csv', start_date=form.start_date.data, end_date=form.end_date.data) }}" onclick="return window.confirmExport('CSV','Active Members')"><i class="bi bi-file-earmark-spreadsheet"></i> Export CSV</a>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="card shadow-sm stat-card">
+        <div class="card-body">
+          <div class="stat-value">{{ stats.total_members }}</div>
+          <div class="stat-label">Total Members</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm stat-card">
+        <div class="card-body">
+          <div class="stat-value">{{ stats.active_members }}</div>
+          <div class="stat-label">Active Members</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm stat-card">
+        <div class="card-body">
+          <div class="stat-value">{{ stats.members_with_loans }}</div>
+          <div class="stat-label">Members with Loans</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold">Top Borrowers</div>
+    <div class="card-body">
+      <div class="chart-container"><canvas id="topBorrowersChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Details</div>
+    <div class="card-body p-0">
+      {% if stats.top_borrowers %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 report-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Member ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th class="text-end">Total Loans</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m, total in stats.top_borrowers %}
+            <tr>
+              <td class="rank-cell">{{ loop.index }}</td>
+              <td><a href="{{ url_for('members.member_detail', member_id=m.id) }}">{{ m.member_id }}</a></td>
+              <td>{{ m.name }}</td>
+              <td>{{ m.email }}</td>
+              <td class="text-end"><span class="badge bg-success">{{ total }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-muted">No member activity in the selected date range.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script type="application/json" id="topBorrowersData">{{ chart_data|tojson }}</script>
+<script>
+  (function(){
+    const el = document.getElementById('topBorrowersChart');
+    if (!el) return;
+    const dataEl = document.getElementById('topBorrowersData');
+    const data = dataEl ? JSON.parse(dataEl.textContent) : { labels: [], values: [] };
+    new Chart(el.getContext('2d'), {
+      type: 'bar',
+      data: { labels: data.labels, datasets: [{ label: 'Loans', data: data.values, backgroundColor: '#198754' }] },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+  })();
+</script>
+{% endblock %}

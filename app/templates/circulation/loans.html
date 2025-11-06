@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Circulation - Library Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Circulation Management</h2>
+  <div class="btn-group">
+    <a href="{{ url_for('circulation.borrow') }}" class="btn btn-primary"><i class="bi bi-journal-arrow-down"></i> Issue Book</a>
+    <a href="{{ url_for('circulation.return_book') }}" class="btn btn-success"><i class="bi bi-journal-arrow-up"></i> Return Book</a>
+    <a href="{{ url_for('circulation.overdue') }}" class="btn btn-warning"><i class="bi bi-exclamation-triangle"></i> View Overdue</a>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-3 search-form">
+      {{ form.hidden_tag() }}
+      <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text" name="query" value="{{ query or '' }}" class="form-control" placeholder="Search by member or book" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        {{ form.status(class_='form-select') }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Member</label>
+        {{ form.member_id(class_='form-select') }}
+      </div>
+      <div class="col-md-3 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="clearCirculationFilters()"><i class="bi bi-x-circle"></i> Clear</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if pagination.total == 0 %}
+  <div class="empty-state"><i class="bi bi-inbox me-2"></i>No loans found.</div>
+{% else %}
+  <div class="mb-2 text-muted">Showing {{ pagination.total }} loans</div>
+  <div class="table-responsive">
+    <table class="table table-hover circulation-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Book</th>
+          <th>Member</th>
+          <th>Borrowed</th>
+          <th>Due</th>
+          <th>Returned</th>
+          <th>Status</th>
+          <th>Fine</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loan in pagination.items %}
+        <tr class="{% if loan.is_overdue %}table-danger{% endif %}">
+          <td>#{{ loan.id }}</td>
+          <td><a href="{{ url_for('catalog.book_detail', book_id=loan.book.id) }}">{{ loan.book.title }}</a></td>
+          <td><a href="{{ url_for('members.member_detail', member_id=loan.member.id) }}">{{ loan.member.name }}</a> <span class="text-muted small">({{ loan.member.member_id }})</span></td>
+          <td>{{ loan.borrow_date.strftime('%b %d, %Y') }}</td>
+          <td>{{ loan.due_date.strftime('%b %d, %Y') }}</td>
+          <td>{{ loan.return_date.strftime('%b %d, %Y') if loan.return_date else '—' }}</td>
+          <td>
+            <span class="badge {{ loan.status_badge_class }}">{% if loan.status.value=='returned' %}Returned{% elif loan.is_overdue %}Overdue ({{ loan.days_overdue }}d){% else %}Active{% endif %}</span>
+          </td>
+          <td>
+            {% if loan.fine_amount and loan.fine_amount|float > 0 %}
+              <span class="text-danger fw-semibold">${{ (loan.fine_amount - (loan.fine_paid or 0))|float('%.2f') }}</span>
+              {% if loan.fine_paid and loan.fine_paid|float > 0 %}<br><small class="text-muted">(Paid: ${{ loan.fine_paid:.2f }})</small>{% endif %}
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-end table-actions">
+            <a href="{{ url_for('circulation.loan_detail', loan_id=loan.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> View</a>
+            {% if loan.is_active %}
+            <form class="d-inline" method="post" action="{{ url_for('circulation.quick_return', loan_id=loan.id) }}">
+              {{ csrf_token() }}
+              <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Return &quot;{{ loan.book.title|e }}&quot; borrowed by {{ loan.member.name|e }}{% if loan.is_overdue %} (Overdue {{ loan.days_overdue }} days){% endif %}?')"><i class="bi bi-journal-arrow-up"></i> Return</button>
+            </form>
+            {% endif %}
+            {% if loan.has_unpaid_fines %}
+            <a href="{{ url_for('circulation.pay_fine', loan_id=loan.id) }}" class="btn btn-sm btn-warning"><i class="bi bi-currency-dollar"></i> Pay Fine</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <nav aria-label="Pagination" class="mt-3">
+    <ul class="pagination">
+      <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('circulation.loans', page=pagination.prev_num, query=query, status=status, member_id=member_id) }}">Previous</a>
+      </li>
+      {% for p in pagination.iter_pages() %}
+        {% if p %}
+          <li class="page-item {% if p == pagination.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('circulation.loans', page=p, query=query, status=status, member_id=member_id) }}">{{ p }}</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('circulation.loans', page=pagination.next_num, query=query, status=status, member_id=member_id) }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+{% endif %}
+{% endblock %}

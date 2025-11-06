@@ -1,0 +1,22 @@
+# Core web framework
+Flask==3.0.2
+
+# ORM and database integration
+Flask-SQLAlchemy==3.1.1
+
+# Database migrations (Alembic integration)
+Flask-Migrate==4.0.5
+
+# Authentication and forms
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+WTForms==3.1.2
+
+# Environment variable management (.env)
+python-dotenv==1.0.1
+
+# Bootstrap 5 helpers for Flask
+Bootstrap-Flask==2.4.1
+
+# PDF generation for reports
+WeasyPrint==62.3

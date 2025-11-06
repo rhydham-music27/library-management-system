@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}429 - Too Many Requests{% endblock %}
+
+{% block content %}
+<div class="text-center py-5" role="main" aria-live="polite">
+  <i class="bi bi-speedometer2 text-warning display-1 mb-3" aria-hidden="true"></i>
+  <h1 class="display-5 fw-bold">429 - Too Many Requests</h1>
+  <p class="lead text-muted">You have made too many requests in a short period. Please wait a moment and try again.</p>
+
+  <p class="text-muted">Please wait: <span id="countdown">60</span> seconds</p>
+  <div class="mt-3">
+    <button id="retryBtn" class="btn btn-primary" disabled>Try Again</button>
+    <a class="btn btn-secondary ms-2" href="{{ url_for('main.index') }}">Return to Home</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function(){
+    const cd = document.getElementById('countdown');
+    const btn = document.getElementById('retryBtn');
+    let n = 60;
+    const t = setInterval(function(){
+      n -= 1; cd.textContent = String(n);
+      if (n <= 0) { clearInterval(t); btn.removeAttribute('disabled'); }
+    }, 1000);
+    btn && btn.addEventListener('click', function(){ window.location.reload(); });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Members - Library Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Library Members</h2>
+  <a href="{{ url_for('members.register') }}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Register New Member</a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="search-form" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label" for="query">Search</label>
+          {{ form.query(class_='form-control', placeholder='Search by name, email, or member ID') }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="status">Status</label>
+          {{ form.status(class_='form-select') }}
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div>
+            <button class="btn btn-primary me-2" type="submit"><i class="bi bi-search"></i> Search</button>
+            <button class="btn btn-outline-secondary" type="button" onclick="(function(){ const url=new URL(window.location.href); url.search=''; window.location.href=url.pathname; })()"><i class="bi bi-x-circle"></i> Clear</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <div class="text-muted small">Showing {{ pagination.total }} members</div>
+</div>
+
+{% if pagination.total > 0 %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th>Member ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Registration Date</th>
+        <th>Status</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in pagination.items %}
+      <tr>
+        <td><a href="{{ url_for('members.member_detail', member_id=m.id) }}" class="text-decoration-none fw-semibold">{{ m.member_id }}</a></td>
+        <td>{{ m.name }}</td>
+        <td><a href="mailto:{{ m.email }}">{{ m.email }}</a></td>
+        <td>{{ m.phone or 'N/A' }}</td>
+        <td>{{ m.registration_date.strftime('%b %d, %Y') if m.registration_date else '' }}</td>
+        <td><span class="badge {{ m.status_badge_class }}">{{ m.status.value.title() }}</span></td>
+        <td class="text-end table-actions">
+          <div class="btn-group" role="group">
+            <a href="{{ url_for('members.member_detail', member_id=m.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> View</a>
+            <a href="{{ url_for('members.edit_member', member_id=m.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Edit</a>
+            <form id="del-member-{{ m.id }}" class="d-inline" method="post" action="{{ url_for('members.delete_member', member_id=m.id) }}">
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('member', '{{ m.name|e }}', 'del-member-{{ m.id }}')"><i class="bi bi-trash"></i> Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<nav aria-label="Members pagination">
+  <ul class="pagination">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('members.members', page=pagination.prev_num, query=request.args.get('query',''), status=request.args.get('status','all')) }}" tabindex="-1">Previous</a>
+    </li>
+    {% for p in pagination.iter_pages() %}
+      {% if p %}
+        <li class="page-item {% if p == pagination.page %}active{% endif %}"><a class="page-link" href="{{ url_for('members.members', page=p, query=request.args.get('query',''), status=request.args.get('status','all')) }}">{{ p }}</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('members.members', page=pagination.next_num, query=request.args.get('query',''), status=request.args.get('status','all')) }}">Next</a>
+    </li>
+  </ul>
+</nav>
+{% else %}
+<div class="empty-state text-center py-5">
+  <i class="bi bi-people fs-1 d-block mb-2"></i>
+  <p class="mb-1">No members found.</p>
+  <p class="text-muted">Adjust filters or register the first member.</p>
+</div>
+{% endif %}
+{% endblock %}

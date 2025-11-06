@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Library Management System{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">User Profile</h2>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="profile-avatar mx-auto mb-3"><i class="bi bi-person fs-1"></i></div>
+        <h5 class="card-title mb-1">{{ user.username }}</h5>
+        <p class="mb-1">
+          {% set role = user.role.value %}
+          <span class="badge role-badge role-{{ role }} text-uppercase">{{ role }}</span>
+        </p>
+        <p class="text-muted small mb-1">Status: {{ 'Active' if user.is_active else 'Suspended' }}</p>
+        <p class="text-muted small">Member since: {{ user.created_at.strftime('%b %d, %Y') if user.created_at else '-' }}</p>
+        <a class="btn btn-outline-secondary btn-sm mt-2" href="{{ url_for('auth.change_password') }}">
+          <i class="bi bi-lock me-1"></i>Change Password
+        </a>
+        <a class="btn btn-outline-danger btn-sm mt-2" href="{{ url_for('auth.logout') }}">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">Edit Profile</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            <label class="form-label" for="full_name">Full name</label>
+            {{ form.full_name(class_='form-control', id='full_name') }}
+            {% for err in form.full_name.errors %}
+              <div class="form-error">{{ err }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            {{ form.email(class_='form-control', id='email') }}
+            {% for err in form.email.errors %}
+              <div class="form-error">{{ err }}</div>
+            {% endfor %}
+          </div>
+          <div class="d-grid">
+            {{ form.submit(class_='btn btn-primary') }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

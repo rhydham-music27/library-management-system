@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Register - Library Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card auth-card mx-auto mt-4" style="max-width: 600px;">
+    <div class="card-header text-center">
+      <h5 class="mb-0"><i class="bi bi-person-plus me-2"></i>Create Account</h5>
+    </div>
+    <div class="card-body">
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          <label class="form-label" for="username">Username</label>
+          {{ form.username(class_='form-control' + (' is-invalid' if form.username.errors else ''), id='username', placeholder='Choose a username', autofocus=True) }}
+          {% for err in form.username.errors %}
+            <div class="invalid-feedback d-block">{{ err }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="email">Email</label>
+          {{ form.email(class_='form-control' + (' is-invalid' if form.email.errors else ''), id='email', placeholder='you@example.com') }}
+          {% for err in form.email.errors %}
+            <div class="invalid-feedback d-block">{{ err }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="full_name">Full name</label>
+          {{ form.full_name(class_='form-control' + (' is-invalid' if form.full_name.errors else ''), id='full_name', placeholder='Your full name') }}
+          {% for err in form.full_name.errors %}
+            <div class="invalid-feedback d-block">{{ err }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-group">
+            {{ form.password(class_='form-control' + (' is-invalid' if form.password.errors else ''), id='reg_password', placeholder='At least 8 characters') }}
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('reg_password')" aria-label="Toggle password visibility">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          <div class="password-strength mt-2">
+            <div class="progress">
+              <div id="pwdStrengthBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small id="pwdStrengthText" class="text-muted"></small>
+          </div>
+          {% for err in form.password.errors %}
+            <div class="invalid-feedback d-block">{{ err }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="password2">Confirm password</label>
+          {{ form.password2(class_='form-control' + (' is-invalid' if form.password2.errors else ''), id='password2', placeholder='Re-enter password') }}
+          {% for err in form.password2.errors %}
+            <div class="invalid-feedback d-block">{{ err }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="d-grid">
+          {{ form.submit(class_='btn btn-primary') }}
+        </div>
+      </form>
+    </div>
+    <div class="card-footer text-center">
+      <small class="text-muted">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in here</a></small>
+    </div>
+  </div>
+</div>
+{% endblock %}

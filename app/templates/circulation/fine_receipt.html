@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Payment Receipt - Library Management System{% endblock %}
+
+{% block content %}
+<div class="receipt-container">
+  <div class="receipt-header">
+    <h3 class="mb-1">Library Management System</h3>
+    <div class="fw-bold">FINE PAYMENT RECEIPT</div>
+    <div class="text-muted">Date: {{ payment_date.strftime('%B %d, %Y') }}</div>
+    <div class="text-muted">Receipt #: RCPT-{{ loan.id }}-{{ payment_date.strftime('%Y%m%d') }}</div>
+  </div>
+
+  <div class="mb-3">
+    <div class="fw-semibold mb-1">Loan Information</div>
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Loan ID</dt>
+      <dd class="col-sm-9">#{{ loan.id }}</dd>
+      <dt class="col-sm-3">Book</dt>
+      <dd class="col-sm-9">{{ loan.book.title }} <span class="text-muted">by {{ loan.book.author }}</span></dd>
+      <dt class="col-sm-3">Member</dt>
+      <dd class="col-sm-9">{{ loan.member.name }} <span class="text-muted">({{ loan.member.member_id }})</span></dd>
+      <dt class="col-sm-3">Member Email</dt>
+      <dd class="col-sm-9">{{ loan.member.email }}</dd>
+    </dl>
+  </div>
+
+  <div class="mb-3">
+    <div class="fw-semibold mb-1">Fine Details</div>
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Due Date</dt>
+      <dd class="col-sm-9">{{ loan.due_date.strftime('%b %d, %Y') }}</dd>
+      <dt class="col-sm-3">Return Date</dt>
+      <dd class="col-sm-9">{{ loan.return_date.strftime('%b %d, %Y') if loan.return_date else 'Not yet returned' }}</dd>
+      <dt class="col-sm-3">Days Overdue</dt>
+      <dd class="col-sm-9">{{ loan.days_overdue }}</dd>
+      <dt class="col-sm-3">Fine Rate</dt>
+      <dd class="col-sm-9">${{ config.FINE_RATE_PER_DAY:.2f }} per day</dd>
+      <dt class="col-sm-3">Total Fine Assessed</dt>
+      <dd class="col-sm-9">${{ loan.fine_amount:.2f }}</dd>
+    </dl>
+  </div>
+
+  <div class="mb-3">
+    <div class="fw-semibold mb-1">Payment Information</div>
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Payment Amount</dt>
+      <dd class="col-sm-9"><span class="fs-4 fw-bold">${{ amount:.2f }}</span></dd>
+      <dt class="col-sm-3">Payment Date</dt>
+      <dd class="col-sm-9">{{ payment_date.strftime('%B %d, %Y') }}</dd>
+      <dt class="col-sm-3">Payment Method</dt>
+      <dd class="col-sm-9">{{ (payment_method or 'Cash')|title }}</dd>
+      <dt class="col-sm-3">Previous Payments</dt>
+      <dd class="col-sm-9">${{ (loan.fine_paid - amount):.2f }}</dd>
+      <dt class="col-sm-3">Remaining Balance</dt>
+      <dd class="col-sm-9">${{ loan.fine_balance:.2f }}</dd>
+    </dl>
+  </div>
+
+  <div class="text-center text-muted">
+    <div>Thank you for your payment.</div>
+    <div>This is an official receipt.</div>
+  </div>
+
+  <div class="mt-3 d-flex gap-2 no-print">
+    <button class="btn btn-outline-secondary" onclick="printReceipt()"><i class="bi bi-printer"></i> Print Receipt</button>
+    <a href="{{ url_for('circulation.loan_detail', loan_id=loan.id) }}" class="btn btn-secondary">Back to Loan</a>
+    <button class="btn btn-outline-secondary" disabled><i class="bi bi-envelope"></i> Email Receipt</button>
+  </div>
+</div>
+
+<style>
+@media print {
+  .no-print { display: none !important; }
+  body { font-size: 12pt; }
+  .receipt-container { border: none !important; box-shadow: none !important; }
+}
+</style>
+{% endblock %}

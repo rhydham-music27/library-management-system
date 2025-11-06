@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Return Book - Library Management System{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('circulation.loans') }}">Circulation</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Return Book</li>
+  </ol>
+</nav>
+
+{% if active_loans is not none %}
+  <div class="card">
+    <div class="card-header bg-white fw-semibold">Select Loan to Return</div>
+    <div class="card-body">
+      {% if active_loans %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Book</th>
+              <th>Member</th>
+              <th>Borrowed</th>
+              <th>Due</th>
+              <th>Status</th>
+              <th>Fine</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loan in active_loans %}
+            <tr class="{% if loan.is_overdue %}table-danger{% endif %}">
+              <td>{{ loan.book.title }}</td>
+              <td>{{ loan.member.name }} <span class="text-muted small">({{ loan.member.member_id }})</span></td>
+              <td>{{ loan.borrow_date.strftime('%b %d, %Y') }}</td>
+              <td>{{ loan.due_date.strftime('%b %d, %Y') }}</td>
+              <td>{% if loan.is_overdue %}<span class="badge bg-danger">Overdue ({{ loan.days_overdue }}d)</span>{% else %}<span class="badge bg-info">Active</span>{% endif %}</td>
+              <td>
+                {% if loan.is_overdue %}
+                  {% set calculated_fine = loan.days_overdue * config.FINE_RATE_PER_DAY %}
+                  <span class="text-danger fw-semibold">${{ calculated_fine:.2f }}</span>
+                  <br><small class="text-muted">({{ loan.days_overdue }}d × ${{ config.FINE_RATE_PER_DAY:.2f }})</small>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('circulation.return_book') }}">
+                  {{ csrf_token() }}
+                  <input type="hidden" name="loan_id" value="{{ loan.id }}" />
+                  <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-journal-arrow-up"></i> Return This Book</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty-state"><i class="bi bi-inbox me-2"></i>No active loans.</div>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header bg-white fw-semibold">Confirm Return</div>
+        <div class="card-body">
+          {% if loan %}
+          <div class="mb-3">
+            <div><strong>Book:</strong> {{ loan.book.title }}</div>
+            <div><strong>Member:</strong> {{ loan.member.name }} <span class="text-muted small">({{ loan.member.member_id }})</span></div>
+            <div><strong>Borrowed on:</strong> {{ loan.borrow_date.strftime('%b %d, %Y') }}</div>
+            <div><strong>Due date:</strong> {{ loan.due_date.strftime('%b %d, %Y') }} {% if loan.is_overdue %}<span class="text-danger">(Overdue {{ loan.days_overdue }} days)</span>{% endif %}</div>
+          </div>
+          {% endif %}
+          <form method="post">
+            {{ form.hidden_tag() }}
+            {{ form.loan_id }}
+            <div class="mb-3">
+              <label class="form-label">Return Date</label>
+              {{ form.return_date(class_='form-control') }}
+              {% if form.return_date.errors %}<div class="invalid-feedback d-block">{{ form.return_date.errors[0] }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Return Notes</label>
+              {{ form.notes(class_='form-control', rows='2') }}
+            </div>
+            {% if loan and loan.is_overdue %}
+            {% set calculated_fine = loan.days_overdue * config.FINE_RATE_PER_DAY %}
+            <div class="alert alert-warning mt-3">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Fine Assessment:</strong> A fine of ${{ calculated_fine:.2f }} will be assessed for this overdue return.
+            </div>
+            {% endif %}
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Mark as Returned</button>
+              <a href="{{ url_for('circulation.loans') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

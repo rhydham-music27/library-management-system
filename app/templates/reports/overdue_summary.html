@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Overdue Summary - Library Management System{% endblock %}
+
+{% block content %}
+<div class="py-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.dashboard') }}">Reports</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Overdue Summary</li>
+    </ol>
+  </nav>
+
+  <h2 class="mb-3">Overdue Books Summary</h2>
+
+  {% if summary.total_overdue > 0 %}
+  <div class="alert alert-warning" role="alert">
+    There are <strong>{{ summary.total_overdue }}</strong> overdue books. <a class="alert-link" href="{{ url_for('circulation.overdue') }}">View detailed overdue list</a>.
+  </div>
+  {% else %}
+  <div class="alert alert-success" role="alert">No overdue books!</div>
+  {% endif %}
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4"><div class="card shadow-sm stat-card"><div class="card-body"><div class="stat-value">{{ summary.total_overdue }}</div><div class="stat-label">Total Overdue</div></div></div></div>
+    <div class="col-md-4"><div class="card shadow-sm stat-card"><div class="card-body"><div class="stat-value">{{ summary.unique_members_with_overdue }}</div><div class="stat-label">Unique Members</div></div></div></div>
+    <div class="col-md-4"><div class="card shadow-sm stat-card"><div class="card-body"><div class="stat-value">{{ summary.avg_days_overdue }}</div><div class="stat-label">Avg Days Overdue</div></div></div></div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Overdue by Member</div>
+        <div class="card-body"><div class="chart-container"><canvas id="overdueByMemberChart"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">Overdue by Days Range</div>
+        <div class="card-body"><div class="chart-container"><canvas id="overdueByDaysChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Overdue Loans</div>
+    <div class="card-body p-0">
+      {% if summary.details %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 report-table">
+          <thead>
+            <tr>
+              <th>Book</th>
+              <th>Member</th>
+              <th>Due Date</th>
+              <th class="text-end">Days Overdue</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in summary.details|sort(attribute='days_overdue', reverse=True) %}
+            <tr class="table-danger">
+              <td><a href="{{ url_for('catalog.book_detail', book_id=d.book.id) }}">{{ d.book.title }}</a></td>
+              <td><a href="{{ url_for('members.member_detail', member_id=d.member.id) }}">{{ d.member.name }}</a></td>
+              <td class="text-danger">{{ d.due_date.strftime('%b %d, %Y') }}</td>
+              <td class="text-end"><span class="badge bg-danger">{{ d.days_overdue }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-muted">No overdue loans.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (function(){
+    const m = document.getElementById('overdueByMemberChart');
+    if (m) {
+      const data = {{ overdue_by_member|tojson }};
+      new Chart(m.getContext('2d'), { type: 'bar', data: { labels: data.labels, datasets: [{ label: 'Overdue', data: data.values, backgroundColor: '#dc3545' }] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }});
+    }
+    const d = document.getElementById('overdueByDaysChart');
+    if (d) {
+      const data2 = {{ overdue_by_days|tojson }};
+      new Chart(d.getContext('2d'), { type: 'doughnut', data: { labels: data2.labels, datasets: [{ data: data2.values, backgroundColor: ['#f8d7da','#f5c2c7','#f1aeb5','#dc3545'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } }});
+    }
+  })();
+</script>
+{% endblock %}
