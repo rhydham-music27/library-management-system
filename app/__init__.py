@@ -1,6 +1,7 @@
 import os
 import click
 from flask import Flask, render_template
+from flask_wtf.csrf import CSRFError
 from flask_wtf.csrf import generate_csrf
 from .extensions import db, migrate, login_manager, csrf
 from .main import bp as main_bp
@@ -110,6 +111,13 @@ def _configure_sqlite_pragmas(app: Flask) -> None:
 
 
 def register_error_handlers(app: Flask) -> None:
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        try:
+            app.logger.warning("CSRF error: %s", getattr(error, 'description', str(error)))
+        except Exception:
+            pass
+        return render_template("errors/400.html"), 400
     @app.errorhandler(404)
     def not_found(error):
         return render_template("errors/404.html"), 404

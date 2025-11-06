@@ -2,7 +2,7 @@ import csv
 import io
 from datetime import date, timedelta
 
-from flask import make_response
+from flask import make_response, current_app, request
 from sqlalchemy import func
 
 from app.extensions import db
@@ -141,7 +141,14 @@ def export_to_pdf(html_content, filename):
     if HTML is None:
         resp = make_response('PDF generation dependency missing', 500)
         return resp
-    pdf_bytes = HTML(string=html_content).write_pdf()
+    try:
+        # Provide base_url so relative URLs (static files, images, CSS) resolve correctly
+        pdf_bytes = HTML(string=html_content, base_url=request.host_url).write_pdf()
+    except Exception:
+        # Log full traceback for debugging (commonly missing Windows deps for WeasyPrint)
+        current_app.logger.exception('WeasyPrint PDF generation failed')
+        resp = make_response('PDF generation failed. Check server logs for details.', 500)
+        return resp
     resp = make_response(pdf_bytes)
     resp.headers['Content-Type'] = 'application/pdf'
     resp.headers['Content-Disposition'] = f'attachment; filename={filename}'

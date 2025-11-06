@@ -29,7 +29,13 @@
   // Confirmation helper
   window.showConfirmModal = function (title, message, onConfirm, confirmText) {
     const modalEl = document.getElementById('confirmModal');
-    if (!modalEl) { return window.confirm(message || title); }
+    if (!modalEl) {
+      const ok = window.confirm(message || title);
+      if (ok && typeof onConfirm === 'function') {
+        try { onConfirm(); } catch (e) { console.error(e); }
+      }
+      return ok;
+    }
     const titleEl = modalEl.querySelector('#confirmModalTitle');
     const msgEl = modalEl.querySelector('#confirmModalMessage');
     const btn = modalEl.querySelector('#confirmModalBtn');
@@ -50,6 +56,17 @@
   // Back-compat wrapper
   window.confirmAction = function (message, onConfirm) {
     return window.showConfirmModal('Confirm', message, onConfirm, 'Confirm');
+  };
+
+  // Deletion confirmation used across templates
+  window.confirmDelete = function (entityType, entityName, formId) {
+    const title = 'Confirm Deletion';
+    const name = (entityName || '').toString();
+    const msg = `Delete ${entityType || 'item'}${name ? ' "' + name + '"' : ''}? This action cannot be undone.`;
+    return window.showConfirmModal(title, msg, function () {
+      const form = document.getElementById(formId);
+      if (form) { try { form.submit(); } catch (e) { console.error(e); } }
+    }, 'Delete');
   };
 
   // Loading overlay helpers

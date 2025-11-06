@@ -10,7 +10,6 @@
 <div class="card mb-3">
   <div class="card-body">
     <form method="get" class="search-form" novalidate>
-      {{ form.hidden_tag() }}
       <div class="row g-2">
         <div class="col-md-6">
           <label class="form-label" for="query">Search</label>
@@ -63,6 +62,7 @@
             <a href="{{ url_for('members.member_detail', member_id=m.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> View</a>
             <a href="{{ url_for('members.edit_member', member_id=m.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Edit</a>
             <form id="del-member-{{ m.id }}" class="d-inline" method="post" action="{{ url_for('members.delete_member', member_id=m.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('member', '{{ m.name|e }}', 'del-member-{{ m.id }}')"><i class="bi bi-trash"></i> Delete</button>
             </form>
           </div>
