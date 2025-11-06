@@ -68,3 +68,4 @@ Thumbs.db
 # Migrations cache/temp
 migrations/*.log
 migrations/versions/__pycache__/
+
